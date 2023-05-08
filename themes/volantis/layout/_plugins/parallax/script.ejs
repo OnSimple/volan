@@ -1,0 +1,60 @@
+<script>
+const img_config = {
+    min: 1,
+    max: 100,
+    root: "https://cdn.example.com/img/"
+}
+let IntervalParallax = null;
+
+function parallax() {
+    <% if (theme.plugins.parallax.position == "fixed") { %>
+    let ParallaxWindow = document.querySelector("html");
+    <% } else{ %>
+    let ParallaxWindow = document.querySelector("#parallax-window");
+    <% } %>
+    Parallax.window = ParallaxWindow;
+    Parallax.options.fade = <%- theme.plugins.parallax.fade %>;
+    Parallax.cache = 1;
+    next_parallax();
+    Parallax.init();
+    IntervalParallax = setInterval(function () {
+        if(!document.hidden){
+            next_parallax();
+        }
+    }, '<%- theme.plugins.parallax.duration %>');
+}
+
+function next_parallax() {
+    if (typeof Parallax == "undefined") {
+        return
+    }
+    <% if (theme.plugins.parallax.position != "fixed") { %>
+    if (!document.querySelector("#full") && !document.querySelector("#half")) {
+        return
+    }
+    <% } %>
+    // 根据长宽比判断当前是手机还是电脑
+    let width = window.innerWidth || document.body.clientWidth;
+    let height = window.innerHeight || document.body.clientHeight;
+    // 高 / 宽 > 1.3 即认为是竖屏
+    let client = height / width > 1.3
+        ? "mobile"
+        : "pc";
+    // 此处改为你自己或其他API,并按照说明修改代码
+    let img = `https://api.dearxuan.com/image?type=${client}`
+    Parallax.options.src = img;
+    Parallax.start();
+}
+
+var runningOnBrowser = typeof window !== "undefined";
+var isBot = runningOnBrowser && !("onscroll" in window) || typeof navigator !== "undefined" && /(gle|ing|ro|msn)bot|crawl|spider|yand|duckgo/i.test(navigator.userAgent);
+if (!isBot) {
+    volantis.js('<%- theme.cdn.map.js.parallax %>').then(() => {
+        parallax()
+    })
+    volantis.pjax.send(() => {
+        clearInterval(IntervalParallax)
+    }, "clearIntervalParallax");
+    volantis.pjax.push(parallax);
+}
+</script>
